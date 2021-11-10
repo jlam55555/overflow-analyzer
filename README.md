@@ -32,6 +32,12 @@ $ dune clean
 ```
 
 ### Running tests
+Build LLVM bytecode test cases:
+```bash
+$ make build_bc
+```
+
+Run tests:
 ```bash
 $ dune test
 ```
