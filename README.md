@@ -16,8 +16,8 @@ This requires a standard OCaml installation with `opam`. The `dune` build system
 
 ### Setup
 ```bash
-$ opam install dune base       # dependencies
-$ opam install utop ounit2     # devdependencies
+$ opam install dune base llvm    # dependencies
+$ opam install utop ounit2       # devdependencies
 ```
 
 ### Building
