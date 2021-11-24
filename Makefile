@@ -38,6 +38,9 @@ build: $(BUILD_DIR)/$(BINARY)
 $(BUILD_DIR)/$(BINARY): $(OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(OTHER_SOURCES)
 
+debug: CXXFLAGS+= -g
+debug: build
+
 run: $(BUILD_DIR)/$(BINARY)
 	$(BUILD_DIR)/$(BINARY)
 
