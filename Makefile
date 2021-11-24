@@ -1,26 +1,40 @@
-# c input files
-SOURCE_DIR=res/c
-LLVM_DIR=res/llvm
-SOURCE_FILES=$(shell ls $(SOURCE_DIR)/*.c)
-LLVM_FILES=$(SOURCE_FILES:$(SOURCE_DIR)/%.c=$(LLVM_DIR)/%.ll)
-LLVM_BC_FILES=$(SOURCE_FILES:$(SOURCE_DIR)/%.c=$(LLVM_DIR)/%.bc)
+# LLVM source files
+LLVM_SOURCE_DIR=res/c
+LLVM_OUT_DIR=res/llvm
+SOURCE_FILES=$(shell ls $(LLVM_SOURCE_DIR)/*.c)
+LLVM_FILES=$(SOURCE_FILES:$(LLVM_SOURCE_DIR)/%.c=$(LLVM_OUT_DIR)/%.ll)
+LLVM_BC_FILES=$(SOURCE_FILES:$(LLVM_SOURCE_DIR)/%.c=$(LLVM_OUT_DIR)/%.bc)
 
-all: build_llvm build_bc
+# source files
+SOURCE_DIR=src
+BUILD_DIR=target
+BINARY=overflow_analyzer
+SOURCES=$(shell ls $(SOURCE_DIR)/*.cpp)
+OBJECTS=$(SOURCES:$(SOURCE_DIR)%.cpp=$(BUILD_DIR)/%.o)
+CXXFLAGS=$(shell llvm-config --cxxflags --ldflags)
+
+all: build build_llvm build_bc
 
 build_llvm: $(LLVM_FILES)
-
 build_bc: $(LLVM_BC_FILES)
 
 # Don't strictly need LLVM files, but these are textual
 # and may be used for visual aid
-$(LLVM_DIR)/%.ll: $(SOURCE_DIR)/%.c
+$(LLVM_OUT_DIR)/%.ll: $(LLVM_SOURCE_DIR)/%.c
 	clang -S -emit-llvm -o $@ $^
 
 # Build LLVM bitcode for reading
-$(LLVM_DIR)/%.bc: $(SOURCE_DIR)/%.c
+$(LLVM_OUT_DIR)/%.bc: $(LLVM_SOURCE_DIR)/%.c
 	clang -c -emit-llvm -o $@ $^
+
+$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
+	mkdir $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c -o $@ $^
+
+build: $(BUILD_DIR)/$(BINARY)
+$(BUILD_DIR)/$(BINARY): $(OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
 .PHONY: clean
 clean:
-	rm -rf $(LLVM_DIR)/*.ll
-	rm -rf $(LLVM_DIR)/*.bc
+	rm -rf $(BUILD_DIR) $(LLVM_OUT_DIR)/*.ll $(LLVM_OUT_DIR)/*.bc
