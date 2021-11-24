@@ -10,8 +10,11 @@ SOURCE_DIR=src
 BUILD_DIR=target
 BINARY=overflow_analyzer
 SOURCES=$(shell ls $(SOURCE_DIR)/*.cpp)
-OBJECTS=$(SOURCES:$(SOURCE_DIR)%.cpp=$(BUILD_DIR)/%.o)
-CXXFLAGS=$(shell llvm-config --cxxflags --ldflags)
+OBJECTS=$(SOURCES:$(SOURCE_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+
+LDFLAGS=$(shell llvm-config --ldflags)
+CXXFLAGS=$(shell llvm-config --cxxflags)
+OTHER_SOURCES=$(shell llvm-config --libs engine scalaropts)
 
 all: build build_llvm build_bc
 
@@ -28,12 +31,15 @@ $(LLVM_OUT_DIR)/%.bc: $(LLVM_SOURCE_DIR)/%.c
 	clang -c -emit-llvm -o $@ $^
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
-	mkdir $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
 build: $(BUILD_DIR)/$(BINARY)
 $(BUILD_DIR)/$(BINARY): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(LDFLAGS) -o $@ $^ $(OTHER_SOURCES)
+
+run: $(BUILD_DIR)/$(BINARY)
+	$(BUILD_DIR)/$(BINARY)
 
 .PHONY: clean
 clean:
