@@ -1,4 +1,0 @@
-(executable
- (public_name overflow_analyzer)
- (name main)
- (libraries overflow_analyzer))
