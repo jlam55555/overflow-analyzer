@@ -1,36 +1,41 @@
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/Bitcode/BitcodeReader.h>
 #include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Support/Error.h>
 
-using namespace std;
+int err_panic(llvm::Error& err, int code) {
+        llvm::errs() << llvm::toString(std::move(err)) << "\n";
+        return code;
+}
 
-int main(int argc, char **argv) {
-
-        // Reference OCaml code (TODO: remove)
-        // let llctx = Llvm.global_context () in
-        // let llmem = Llvm.MemoryBuffer.of_file path in
-        // Llvm_bitreader.parse_bitcode llctx llmem
-
+llvm::Expected<std::unique_ptr<llvm::Module>> getModuleFromFile(std::string& filename) {
         // Read in bitcode from file
         llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> bufferOrErr
-                = llvm::MemoryBuffer::getFile("res/llvm/hello.bc");
+                = llvm::MemoryBuffer::getFile(filename);
         if (auto err = llvm::errorCodeToError(bufferOrErr.getError())) {
-                llvm::errs() << llvm::toString(std::move(err)) << "\n";
-                return 1;
+                return err;
         }
         llvm::MemoryBufferRef memoryBuffer
                 = bufferOrErr.get().get()->getMemBufferRef();
 
         // Build module from memory buffer
         llvm::LLVMContext context{};
-        llvm::Expected<std::unique_ptr<llvm::Module>> moduleOrErr
-                = llvm::parseBitcodeFile(memoryBuffer, context);
-        if (auto err = moduleOrErr.takeError()) {
-                llvm::errs() << llvm::toString(std::move(err)) << "\n";
-                return 1;
-        }
-        llvm::Module *module = moduleOrErr.get().get();
+        return llvm::parseBitcodeFile(memoryBuffer, context);
+}
 
+int main(int argc, char **argv) {
+        // Get module from path
+        std::string path = "res/llvm/hello.bc";
+        llvm::Expected<std::unique_ptr<llvm::Module>> moduleOrErr
+                = getModuleFromFile(path);
+        if (auto err = moduleOrErr.takeError()) {
+                return err_panic(err, -1);
+        }
+
+        // TODO: grab all the LLVM data
+        // TODO: perform the analysis
+
+        // Done.
         llvm::outs() << "Done.\n";
         return 0;
 }
