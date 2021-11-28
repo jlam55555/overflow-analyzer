@@ -28,7 +28,7 @@ $(LLVM_OUT_DIR)/%.ll: $(LLVM_SOURCE_DIR)/%.c
 
 # Build LLVM bitcode for reading
 $(LLVM_OUT_DIR)/%.bc: $(LLVM_SOURCE_DIR)/%.c
-	clang -c -emit-llvm -o $@ $^
+	clang -c -emit-llvm -o $@ $^ -fno-discard-value-names
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
 	mkdir -p $(BUILD_DIR)

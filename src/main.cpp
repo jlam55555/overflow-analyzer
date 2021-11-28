@@ -1,3 +1,4 @@
+#include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/Bitcode/BitcodeReader.h>
 #include <llvm/Support/MemoryBuffer.h>
@@ -5,6 +6,33 @@
 
 // Note: avoid `using namespace *` and `auto` typing so that namespaces and
 // types are very explicit. Good for avoiding confusion for learning purposes.
+
+
+/**
+ * Helper function for printing a basic block and optionally the instructions
+ * within the basic block
+ */
+void print_bb(llvm::BasicBlock &bb, bool inst=false) {
+        if (inst) {
+                bb.print(llvm::errs());
+        } else { 
+                llvm::errs() << "B: " << bb.getName() << "\n";
+        }
+}
+
+/**
+ * Helper function for printing a function and optionally all the instructions
+ * in all the basic block
+ */
+void print_func(llvm::Function &f, bool inst=false) {
+        llvm::errs() << "F: " << f.getName() << "\n";
+        // print bbs
+        for (llvm::ilist<llvm::BasicBlock>::iterator it= f.getBasicBlockList().begin();
+                it != f.getBasicBlockList().end(); it++) {
+                print_bb(*it, inst);
+        }
+        llvm::errs() << "\n";
+}
 
 /**
  * Helper function to exit the program due to a `llvm::Error`. Will exit
@@ -51,11 +79,42 @@ getFunctionsFromModule(std::unique_ptr<llvm::Module>& module) {
 }
 
 /**
+ * Returns a vector of pointer to BasicBlocks from a `llvm::Function`.
+ */
+std::vector<llvm::BasicBlock *>
+getBasicBlocksFromFunction(llvm::Function *fnc) {
+        std::vector<llvm::BasicBlock *> bbs{};
+
+        for (llvm::ilist<llvm::BasicBlock>::iterator it 
+                = fnc->getBasicBlockList().begin();
+            it != fnc->getBasicBlockList().end(); it++) {
+                bbs.push_back(&*it);
+        }
+
+        return bbs;
+}
+
+/**
+ * Returns a vector of pointer to Instructions from a `llvm::BasicBlock`.
+ */
+std::vector<llvm::Instruction *> 
+getInstructionsFromBasicBlock(llvm::BasicBlock *bb) {
+        std::vector<llvm::Instruction *> insts{};
+
+        for (llvm::ilist<llvm::Instruction>::iterator it = bb->getInstList().begin(); 
+            it != bb->getInstList().end(); it++) {
+                insts.push_back(&*it);
+        }
+
+        return insts;
+}
+
+/**
  * Begins the overflow analysis.
  */
 int main(int argc, char **argv) {
         // Get module from path
-        std::string path = "res/llvm/hello.bc";
+        std::string path = "res/llvm/bbs.bc";
         llvm::LLVMContext context{};
         llvm::Expected<std::unique_ptr<llvm::Module>> moduleOrErr
                 = getModuleFromFile(path, context);
@@ -64,17 +123,31 @@ int main(int argc, char **argv) {
         }
         std::unique_ptr<llvm::Module> module = std::move(moduleOrErr.get());
 
-        // Print module (for debugging)
+        // // Print module (for debugging)
         // module->print(llvm::errs(), nullptr);
 
         // grab LLVM functions, basic blocks, instructions, lvars
         std::vector<llvm::Function *> fns = getFunctionsFromModule(module);
+        std::vector<llvm::BasicBlock *> bbs = getBasicBlocksFromFunction(fns[0]);
+        std::vector<llvm::Instruction *> insts = getInstructionsFromBasicBlock(bbs[0]);
 
-        // Print functions (for debugging)
-        // for (auto f : fns) {
-        //         f->print(llvm::errs(), nullptr);
-        // }
+        // need to get locals and operands from Instructions 
 
+        llvm::errs() << *insts[0] << "\n\t";
+        llvm::errs() << insts[0]->getOpcodeName() << "\n\t";
+
+        // getting operands from an instruction
+        llvm::Instruction *inst = insts[0];
+        std::vector<llvm::Use *> opers{};
+        for (llvm::Use *it = inst->op_begin(); it != inst->op_end(); it++) {
+                opers.push_back(&*it);
+        }
+
+        llvm::errs() << "Operand No: " << opers[0]->getOperandNo() << "\n\t\t";
+
+        llvm::errs() << *(insts[0]->getOperand(0)) << "\n\t\t";
+        llvm::errs() << insts[0]->getOperand(0)->getName() << "\n\t\t";
+        
         // TODO: perform the analysis
 
         // Done.
