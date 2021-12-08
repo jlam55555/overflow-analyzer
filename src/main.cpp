@@ -14,11 +14,11 @@
  * Helper function for printing a basic block and optionally the instructions
  * within the basic block
  */
-void print_bb(llvm::BasicBlock &bb, bool inst = false) {
+void print_bb(const llvm::BasicBlock *bb, bool inst = false) {
 	if (inst) {
-		bb.print(llvm::errs());
+		bb->print(llvm::errs());
 	} else {
-		llvm::errs() << "B: " << bb.getName() << "\n";
+		llvm::errs() << "B: " << bb->getName() << "\n";
 	}
 }
 
@@ -26,12 +26,12 @@ void print_bb(llvm::BasicBlock &bb, bool inst = false) {
  * Helper function for printing a function and optionally all the instructions
  * in all the basic block
  */
-void print_func(llvm::Function &f, bool inst = false) {
-	llvm::errs() << "F: " << f.getName() << "\n";
+void print_func(llvm::Function *f, bool inst = false) {
+	llvm::errs() << "F: " << f->getName() << "\n";
 	// print bbs
-	for (llvm::ilist<llvm::BasicBlock>::iterator it = f.getBasicBlockList().begin();
-             it != f.getBasicBlockList().end(); it++) {
-		print_bb(*it, inst);
+	for (llvm::ilist<llvm::BasicBlock>::iterator it = f->getBasicBlockList().begin();
+             it != f->getBasicBlockList().end(); it++) {
+		print_bb(&*it, inst);
 	}
 	llvm::errs() << "\n";
 }
@@ -146,7 +146,8 @@ bool analyze_bb(llvm::BasicBlock *bb) {
                 return false;
         }
 
-        // TOOD: do stuff
+        // TODO: do stuff
+        llvm::outs() << "Got basic_block: " << bb->getName() << "\n";
 
         // Analysis complete; mark clean.
         bb_analysis->mark_clean();
@@ -175,8 +176,6 @@ void dataflow_analysis(llvm::BasicBlock *entry_point) {
                         }
                 }
         }
-
-        llvm::outs() << "Analysis complete.\n";
 }
 
 /**
@@ -197,29 +196,30 @@ int main(int argc, char **argv) {
         // module->print(llvm::errs(), nullptr);
 
         // grab LLVM functions, basic blocks, instructions, lvars
-        std::vector<llvm::Function *> fns = getFunctionsFromModule(module);
-        std::vector<llvm::BasicBlock *> bbs = getBasicBlocksFromFunction(fns[0]);
-        std::vector<llvm::Instruction *> insts =
-                getInstructionsFromBasicBlock(bbs[0]);
+        // std::vector<llvm::Function *> fns = getFunctionsFromModule(module);
+        // std::vector<llvm::BasicBlock *> bbs = getBasicBlocksFromFunction(fns[0]);
+        // std::vector<llvm::Instruction *> insts =
+        //         getInstructionsFromBasicBlock(bbs[0]);
 
-        // need to get locals and operands from Instructions
+        // // need to get locals and operands from Instructions
 
-        llvm::errs() << *insts[0] << "\n\t";
-        llvm::errs() << insts[0]->getOpcodeName() << "\n\t";
+        // llvm::errs() << *insts[0] << "\n\t";
+        // llvm::errs() << insts[0]->getOpcodeName() << "\n\t";
 
-        // getting operands from an instruction
-        llvm::Instruction *inst = insts[0];
-        std::vector<llvm::Use *> opers{};
-        for (llvm::Use *it = inst->op_begin(); it != inst->op_end(); it++) {
-                opers.push_back(&*it);
-        }
+        // // getting operands from an instruction
+        // llvm::Instruction *inst = insts[0];
+        // std::vector<llvm::Use *> opers{};
+        // for (llvm::Use *it = inst->op_begin(); it != inst->op_end(); it++) {
+        //         opers.push_back(&*it);
+        // }
 
-        llvm::errs() << "Operand No: " << opers[0]->getOperandNo() << "\n\t\t";
+        // llvm::errs() << "Operand No: " << opers[0]->getOperandNo() << "\n\t\t";
 
-        llvm::errs() << *(insts[0]->getOperand(0)) << "\n\t\t";
-        llvm::errs() << insts[0]->getOperand(0)->getName() << "\n\t\t";
+        // llvm::errs() << *(insts[0]->getOperand(0)) << "\n\t\t";
+        // llvm::errs() << insts[0]->getOperand(0)->getName() << "\n\t\t";
 
-        // TODO: perform the analysis
+        // Perform the analysis.
+        dataflow_analysis(&module->getFunction("main")->getEntryBlock());
 
         // Done.
         llvm::outs() << "Done.\n";
