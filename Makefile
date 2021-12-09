@@ -41,7 +41,7 @@ $(BUILD_DIR)/$(BINARY): $(OBJECTS)
 debug: CXXFLAGS+= -g
 debug: build
 
-run: $(BUILD_DIR)/$(BINARY)
+run: all
 	$(BUILD_DIR)/$(BINARY)
 
 .PHONY: clean
