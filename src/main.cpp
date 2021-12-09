@@ -5,7 +5,9 @@
 #include <llvm/Support/Error.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <queue>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 // Note: avoid `using namespace *` and `auto` typing so that namespaces and
 // types are very explicit. Good for avoiding confusion for learning purposes.
@@ -179,11 +181,40 @@ void dataflow_analysis(llvm::BasicBlock *entry_point) {
 }
 
 /**
+ * Loop through all basic blocks of function, get all buffers, local
+ * variables, and virtual registers.
+ *
+ * Virtual registers (vrs): all temporary values
+ * Local variables (lvs): all temporary values that are allocated on the stack
+ * Buffers (bufs): all local variables of array type.
+ *
+ * We need to keep track of information about all vrs in order to perform
+ * the analysis, although we will only really report information about bufs.
+ * Not sure yet if lvs will be useful.
+ */
+void get_all_lvars_buffers(llvm::Function *fn) {
+        std::unordered_set<std::string> bufs{}, lvs{}, vrs{};
+
+        // Loop through all basic blocks, get all of the above values.
+        for (llvm::BasicBlock *bb : getBasicBlocksFromFunction(fn)) {
+                for (llvm::BasicBlock::iterator it = bb->begin(); it != bb->end(); ++it) {
+                        llvm::Instruction *inst = &*it;
+                        
+                        llvm::outs() << "Got instruction: " << *inst << "\n";
+                        llvm::outs() << "Type: " << *inst->getType() << "\n";
+                        llvm::outs() << "Arity: " << inst->getNumOperands() << "\n";
+                        llvm::outs() << "Opcode: " << inst->getOpcodeName() << "\n";
+                        llvm::outs() << "Metadata: " << inst->hasMetadata() << "\n";
+                }
+        }
+}
+
+/**
  * Begins the overflow analysis.
  */
 int main(int argc, char **argv) {
         // Get module from path
-        std::string path = "res/llvm/bbs.bc";
+        std::string path = "res/llvm/bufs.bc";
         llvm::LLVMContext context{};
         llvm::Expected<std::unique_ptr<llvm::Module>> moduleOrErr =
                 getModuleFromFile(path, context);
@@ -218,8 +249,18 @@ int main(int argc, char **argv) {
         // llvm::errs() << *(insts[0]->getOperand(0)) << "\n\t\t";
         // llvm::errs() << insts[0]->getOperand(0)->getName() << "\n\t\t";
 
+        // TODO: currently only worrying about the analysis of a single function,
+        // will generalize to multiple functions later.
+        
+        // Get the main function (entry point to function).
+        llvm::Function *main_fn = module->getFunction("main");
+        print_func(main_fn, true);
+
+        // TODO: get all pseudo-registers and buffers in function
+        get_all_lvars_buffers(main_fn);
+
         // Perform the analysis.
-        dataflow_analysis(&module->getFunction("main")->getEntryBlock());
+        dataflow_analysis(&main_fn->getEntryBlock());
 
         // Done.
         llvm::outs() << "Done.\n";
