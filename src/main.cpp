@@ -194,38 +194,40 @@ void dataflow_analysis(llvm::BasicBlock *entry_point) {
  * Not sure yet if lvs will be useful.
  */
 void get_all_values(llvm::ModuleSlotTracker *mst, llvm::Function *fn) {
-        std::unordered_set<std::string> bufs{}, lvs{}, vrs{};
+        // std::unordered_set<std::string> bufs{}, lvs{}, vrs{};
+        std::unordered_map<std::string, llvm::Value *> vals{};
 
         // Necessary for correct operation of ModuleSlotTracker
         mst->incorporateFunction(*fn);
+
+        llvm::outs() << "\tGrabbing variables from function: " << fn->getName() << "\n";
 
         // Loop through all basic blocks, get all of the above values.
         for (llvm::BasicBlock *bb : getBasicBlocksFromFunction(fn)) {
                 for (llvm::BasicBlock::iterator it = bb->begin(); it != bb->end(); ++it) {
                         llvm::Instruction *inst = &*it;
 
+                        llvm::outs() << "\t\tExamining instruction: " << *inst << "\n";
                         if (inst->getType()->isVoidTy()) {
-                                llvm::outs() << "\tVoid type instruction\n";
+                                llvm::outs() << "\t\tVoid type instruction, ignoring...\n\n";
+                                continue;
                         }
                         
-//                        if (inst->getOpcode() == llvm::Instruction::Alloca) {
-                                llvm::outs() << "Got instruction: " << *inst << "\n";
-                                llvm::outs() << "\tName: " << inst->getName() << "\n";
+                        std::string valName = inst->hasName()
+                                ? inst->getName().str()
+                                : "%vr" + std::to_string(mst->getLocalSlot(inst));
+                        llvm::outs() << "\t\tName: " << valName << "\n\n";
 
-                                if (!inst->getType()->isVoidTy() && !inst->hasName()) {
-                                        llvm::outs() << "Slot number: " << mst->getLocalSlot(inst) << "\n";
-                                }
-                                
-                                // llvm::outs() << "Type: " << *inst->getType() << "\n";
-                                llvm::outs() << "\tArity: " << inst->getNumOperands() << "\n";
-                                for (int i = 0; i < inst->getNumOperands(); ++i) {
-                                        llvm::outs() << "\t\tOperand: " << *inst->getOperand(i) << "\n";
-                                }
-                                // llvm::outs() << "Opcode: " << inst->getOpcodeName() << "\n";
-                                // llvm::outs() << "Metadata: " << inst->hasMetadata() << "\n";
-//                        }
+                        vals[valName] = inst;
                 }
         }
+
+        // Summary for debugging
+        llvm::outs() << "\tFunction summary: got values:\n";
+        for (std::pair<std::string, llvm::Value *> kv : vals) {
+                llvm::outs() << "\t\t" << kv.first << " (" << *kv.second->getType() << ")\n";
+        }
+        llvm::outs() << "\n\n";
 }
 
 /**
@@ -241,32 +243,6 @@ int main(int argc, char **argv) {
                 err_panic(err, -1);
         }
         std::unique_ptr<llvm::Module> module = std::move(moduleOrErr.get());
-
-        // // Print module (for debugging)
-        // module->print(llvm::errs(), nullptr);
-
-        // grab LLVM functions, basic blocks, instructions, lvars
-        // std::vector<llvm::Function *> fns = getFunctionsFromModule(module);
-        // std::vector<llvm::BasicBlock *> bbs = getBasicBlocksFromFunction(fns[0]);
-        // std::vector<llvm::Instruction *> insts =
-        //         getInstructionsFromBasicBlock(bbs[0]);
-
-        // // need to get locals and operands from Instructions
-
-        // llvm::errs() << *insts[0] << "\n\t";
-        // llvm::errs() << insts[0]->getOpcodeName() << "\n\t";
-
-        // // getting operands from an instruction
-        // llvm::Instruction *inst = insts[0];
-        // std::vector<llvm::Use *> opers{};
-        // for (llvm::Use *it = inst->op_begin(); it != inst->op_end(); it++) {
-        //         opers.push_back(&*it);
-        // }
-
-        // llvm::errs() << "Operand No: " << opers[0]->getOperandNo() << "\n\t\t";
-
-        // llvm::errs() << *(insts[0]->getOperand(0)) << "\n\t\t";
-        // llvm::errs() << insts[0]->getOperand(0)->getName() << "\n\t\t";
 
         // TODO: currently only worrying about the analysis of a single function,
         // will generalize to multiple functions later.
