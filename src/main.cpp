@@ -2,6 +2,7 @@
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/ModuleSlotTracker.h>
 #include <llvm/Support/Error.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <queue>
@@ -192,16 +193,28 @@ void dataflow_analysis(llvm::BasicBlock *entry_point) {
  * the analysis, although we will only really report information about bufs.
  * Not sure yet if lvs will be useful.
  */
-void get_all_lvars_buffers(llvm::Function *fn) {
+void get_all_values(llvm::ModuleSlotTracker *mst, llvm::Function *fn) {
         std::unordered_set<std::string> bufs{}, lvs{}, vrs{};
+
+        // Necessary for correct operation of ModuleSlotTracker
+        mst->incorporateFunction(*fn);
 
         // Loop through all basic blocks, get all of the above values.
         for (llvm::BasicBlock *bb : getBasicBlocksFromFunction(fn)) {
                 for (llvm::BasicBlock::iterator it = bb->begin(); it != bb->end(); ++it) {
                         llvm::Instruction *inst = &*it;
+
+                        if (inst->getType()->isVoidTy()) {
+                                llvm::outs() << "\tVoid type instruction\n";
+                        }
+                        
 //                        if (inst->getOpcode() == llvm::Instruction::Alloca) {
                                 llvm::outs() << "Got instruction: " << *inst << "\n";
                                 llvm::outs() << "\tName: " << inst->getName() << "\n";
+
+                                if (!inst->getType()->isVoidTy() && !inst->hasName()) {
+                                        llvm::outs() << "Slot number: " << mst->getLocalSlot(inst) << "\n";
+                                }
                                 
                                 // llvm::outs() << "Type: " << *inst->getType() << "\n";
                                 llvm::outs() << "\tArity: " << inst->getNumOperands() << "\n";
@@ -262,8 +275,11 @@ int main(int argc, char **argv) {
         llvm::Function *main_fn = module->getFunction("main");
         print_func(main_fn, true);
 
-        // TODO: get all pseudo-registers and buffers in function
-        get_all_lvars_buffers(main_fn);
+        // Get SlotTracker to get names of virtual registers.
+        llvm::ModuleSlotTracker mst{&*module};
+
+        // TODO: get all values in function
+        get_all_values(&mst, main_fn);
 
         // Perform the analysis.
         dataflow_analysis(&main_fn->getEntryBlock());
