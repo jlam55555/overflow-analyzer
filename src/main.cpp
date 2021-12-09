@@ -199,12 +199,18 @@ void get_all_lvars_buffers(llvm::Function *fn) {
         for (llvm::BasicBlock *bb : getBasicBlocksFromFunction(fn)) {
                 for (llvm::BasicBlock::iterator it = bb->begin(); it != bb->end(); ++it) {
                         llvm::Instruction *inst = &*it;
-                        
-                        llvm::outs() << "Got instruction: " << *inst << "\n";
-                        llvm::outs() << "Type: " << *inst->getType() << "\n";
-                        llvm::outs() << "Arity: " << inst->getNumOperands() << "\n";
-                        llvm::outs() << "Opcode: " << inst->getOpcodeName() << "\n";
-                        llvm::outs() << "Metadata: " << inst->hasMetadata() << "\n";
+//                        if (inst->getOpcode() == llvm::Instruction::Alloca) {
+                                llvm::outs() << "Got instruction: " << *inst << "\n";
+                                llvm::outs() << "\tName: " << inst->getName() << "\n";
+                                
+                                // llvm::outs() << "Type: " << *inst->getType() << "\n";
+                                llvm::outs() << "\tArity: " << inst->getNumOperands() << "\n";
+                                for (int i = 0; i < inst->getNumOperands(); ++i) {
+                                        llvm::outs() << "\t\tOperand: " << *inst->getOperand(i) << "\n";
+                                }
+                                // llvm::outs() << "Opcode: " << inst->getOpcodeName() << "\n";
+                                // llvm::outs() << "Metadata: " << inst->hasMetadata() << "\n";
+//                        }
                 }
         }
 }
@@ -251,7 +257,7 @@ int main(int argc, char **argv) {
 
         // TODO: currently only worrying about the analysis of a single function,
         // will generalize to multiple functions later.
-        
+
         // Get the main function (entry point to function).
         llvm::Function *main_fn = module->getFunction("main");
         print_func(main_fn, true);
