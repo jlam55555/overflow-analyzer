@@ -21,7 +21,7 @@ namespace boda {
         // Finds all of the candidate buffer values in the function.
         // This includes pointer-to-pointer and pointer-to-array types.
         void getBufferValues(GlobalState *state, llvm::Function *fn) {
-                boda::FunctionAnalysis *fa = &state->fas[fn];
+                boda::FunctionState *fa = &state->fas[fn];
 
                 for (llvm::Function::iterator bb_it = fn->begin();
                      bb_it != fn->end();
@@ -78,14 +78,14 @@ namespace boda {
 
         // Performs buffer origin dataflow analysis on a single basic block,
         // returning true iff any changes were made.
-        bool boda_bb(FunctionAnalysis *fa, llvm::BasicBlock *bb) {
+        bool boda_bb(FunctionState *fa, llvm::BasicBlock *bb) {
 #ifdef DEBUG
                 llvm::outs() << "\t\t\tAnalyzing basic block: " << bb->getName() << "\n";
 #endif
                 
                 // Get initial analysis by joining analyses (output_sets) of predecessors.
                 // The greek letter sigma is the symbol used in the literature.
-                ValueAnalysis sigma{};
+                BodaAnalysis sigma{};
                 for (llvm::pred_iterator bb_it = llvm::pred_begin(bb);
                      bb_it != llvm::pred_end(bb);
                      ++bb_it) {
@@ -110,7 +110,7 @@ namespace boda {
         }
 
         // Perform the dataflow analysis on this function.
-        void worklist(FunctionAnalysis *fa) {
+        void worklist(FunctionState *fa) {
 #ifdef DEBUG
                 llvm::outs() << "\t\tPerforming dataflow analysis worklist algorithm\n";
 #endif
@@ -164,7 +164,7 @@ namespace boda {
                 state->mst.incorporateFunction(*fn);
 
                 // Create function analysis class.
-                state->fas[fn] = FunctionAnalysis{fn};
+                state->fas[fn] = FunctionState{fn};
 
                 // Get all buffer values in the function.
                 getBufferValues(state, fn);

@@ -16,49 +16,53 @@
 
 namespace boda {
 
-        class ValueAnalysis {
+        // Dataflow analysis instance at a program point. (I.e., an instance of this is
+        // created for each instruction.)
+        class BodaAnalysis {
         public:
                 // Set of possible buffer origins for each buffer.
                 std::unordered_map<llvm::Value *, std::unordered_set<std::string>> bufos{};
                 
                 // Comparing two dataflow analyses by value.
-                bool operator==(const ValueAnalysis &va2) const;
-                bool operator!=(const ValueAnalysis &va2) const;
+                bool operator==(const BodaAnalysis &va2) const;
+                bool operator!=(const BodaAnalysis &va2) const;
                 
                 // Dataflow analysis join of abstract variables for all buffers.
                 // This lattice is the set lattice, so the join operation is
                 // simply set union.
-                void join(ValueAnalysis &va2);
+                void join(BodaAnalysis &va2);
 
                 // Transition function of dataflow analysis over an instruction.
                 void transition(llvm::Instruction *inst);
         };
 
-        class FunctionAnalysis {
+        // State relevant to the analysis of a function.
+        class FunctionState {
         public:
                 llvm::Function *fn;
                 std::unordered_set<std::string> bufos{};
                 std::unordered_map<std::string, llvm::Value *> bufs{};
 
                 // Mapping from each instruction to the analysis after that instruction.
-                std::unordered_map<llvm::Value *, ValueAnalysis> ias{};
+                std::unordered_map<llvm::Value *, BodaAnalysis> ias{};
 
                 // Dirty basic blocks for the worklist phase.
                 std::unordered_map<llvm::BasicBlock *, bool> dirty_bbs{};
 
                 // Note: Default constructor required for use in map.
                 // Shouldn't really have null function though.
-                FunctionAnalysis();
+                FunctionState();
                 
-                FunctionAnalysis(llvm::Function *fn);
+                FunctionState(llvm::Function *fn);
         };
-        
+
+        // State relevant to the overall analysis.
         class GlobalState {
         public:
                 llvm::Module *mod;
                 llvm::ModuleSlotTracker mst;
 
-                std::unordered_map<llvm::Function *, FunctionAnalysis> fas;
+                std::unordered_map<llvm::Function *, FunctionState> fas;
 
                 GlobalState(llvm::Module *mod);
         };
