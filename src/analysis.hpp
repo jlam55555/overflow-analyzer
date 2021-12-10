@@ -16,11 +16,18 @@
 
 namespace boda {
 
+        class ValueAnalysis {
+        public:
+                // Set of possible buffer origins.
+                std::unordered_set<std::string> bufos{};
+        };
+
         class FunctionAnalysis {
         public:
+                llvm::Function *fn;
                 std::unordered_set<std::string> bufos{};
                 std::unordered_map<std::string, llvm::Value *> bufs{};
-                llvm::Function *fn;
+                std::unordered_map<llvm::Value *, ValueAnalysis> ias;
 
                 // Note: Default constructor required for use in map.
                 // Shouldn't really have null function though.
@@ -31,8 +38,8 @@ namespace boda {
         
         class GlobalState {
         public:
-                llvm::ModuleSlotTracker mst;
                 llvm::Module *mod;
+                llvm::ModuleSlotTracker mst;
 
                 std::unordered_map<llvm::Function *, FunctionAnalysis> fas;
 
