@@ -78,13 +78,18 @@ namespace boda {
 
         // Performs buffer origin dataflow analysis on a single basic block,
         // returning true iff any changes were made.
-        bool boda_bb(llvm::BasicBlock *bb) {
+        bool boda_bb(FunctionAnalysis *fa, llvm::BasicBlock *bb) {
 #ifdef DEBUG
                 llvm::outs() << "\t\t\tAnalyzing basic block: " << bb->getName() << "\n";
 #endif
                 
-                // Get analysis by joining analyses of predecessors.
-                // TODO
+                // Get initial analysis by joining analyses (output_sets) of predecessors.
+                ValueAnalysis sigma{};
+                for (llvm::pred_iterator bb_it = llvm::pred_begin(bb);
+                     bb_it != llvm::pred_end(bb);
+                     ++bb_it) {
+                        sigma.join(fa->ias[(*bb_it)->getTerminator()]);
+                }
 
                 // Walk through instruction by instruction, performing transition function.
                 // TODO
@@ -119,7 +124,7 @@ namespace boda {
 
                         // If analysis of basic block changes any values,
                         // then mark all successors dirty and add them to the queue.
-                        if (boda_bb(bb)) {
+                        if (boda_bb(fa, bb)) {
                                 for (llvm::succ_iterator bb_it = llvm::succ_begin(bb);
                                      bb_it != llvm::succ_end(bb);
                                      ++bb_it) {
@@ -133,6 +138,13 @@ namespace boda {
         // "Buffer origin" dataflow analysis. Tracking which stack variables
         // a given may have originated from at any point.
         void boda(GlobalState *state, llvm::Function *fn) {
+                if (fn->isDeclaration()) {
+#ifdef DEBUG
+                        llvm::outs() << "\tExternal function, skipping analysis: " << fn->getName() << "\n";
+#endif
+                        return;
+                }
+                
 #ifdef DEBUG
                 llvm::outs() << "\tBODA on function: " << fn->getName() << "\n";
 #endif

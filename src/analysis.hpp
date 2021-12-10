@@ -20,6 +20,8 @@ namespace boda {
         public:
                 // Set of possible buffer origins for each buffer.
                 std::unordered_map<llvm::Value *, std::unordered_set<std::string>> bufos{};
+
+                void join(ValueAnalysis &va2);
         };
 
         class FunctionAnalysis {
