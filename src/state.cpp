@@ -2,13 +2,32 @@
 
 namespace boda {
 
-        bool BufOrigin::operator==(const BufOrigin &bo2) const {
-                return pointer_depth == bo2.pointer_depth
-                        && bufo_name == bo2.bufo_name;
+        BufOrigin BufOrigin::deref() {
+                BufOrigin bo = *this;
+                --bo.pointer_depth;
+
+                if (bo.pointer_depth < 0) {
+                        llvm::errs() << "Error: Dereferencing past depth 0\n";
+                        std::exit(-1);
+                }
+                
+                return bo;
         }
 
-        BufOrigin::BufOrigin(int pointer_depth, std::string bufo_name)
-                : pointer_depth{pointer_depth}, bufo_name{bufo_name} {}
+        BufOrigin BufOrigin::ref() {
+                BufOrigin bo = *this;
+                ++bo.pointer_depth;
+                return bo;
+        }
+
+
+        bool BufOrigin::operator==(const BufOrigin &bo2) const {
+                return pointer_depth == bo2.pointer_depth
+                        && bufo == bo2.bufo;
+        }
+
+        BufOrigin::BufOrigin(int pointer_depth, llvm::Value *bufo)
+                : pointer_depth{pointer_depth}, bufo{bufo} {}
 
         bool BodaAnalysis::operator==(const BodaAnalysis &va2) const {
                 return bufos == va2.bufos;
@@ -21,15 +40,20 @@ namespace boda {
         void BodaAnalysis::join(BodaAnalysis &va2) {
                 for (std::pair<llvm::Value *, std::unordered_set<BufOrigin>> buf_analysis
                              : va2.bufos) {
-                        bufos[buf_analysis.first].insert(buf_analysis.second.begin(),
-                                                         buf_analysis.second.end());
+                        bufos[buf_analysis.first]
+                                .insert(buf_analysis.second.begin(),
+                                        buf_analysis.second.end());
                 }
         }
 
         void BodaAnalysis::transition(llvm::Instruction *inst) {
+                llvm::Value *to, *from;
+                
                 switch (inst->getOpcode()) {
                 case llvm::Instruction::MemoryOps::Alloca:
                         // Alloca opcode.
+                        to = inst;
+                        bufos[to].insert(BufOrigin{1, to});
                         break;
                         
                 case llvm::Instruction::MemoryOps::Load:

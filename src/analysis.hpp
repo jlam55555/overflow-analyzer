@@ -22,12 +22,16 @@ namespace boda {
         class BufOrigin {
         public:
                 int pointer_depth;
-                std::string bufo_name;
+                llvm::Value *bufo;
+
+                // Returns a copy, with one level less/more of indirection.
+                BufOrigin deref();
+                BufOrigin ref();
 
                 // Necessary for hashing.
                 bool operator==(const BufOrigin &bo2) const;
 
-                BufOrigin(int pointer_depth, std::string bufo_name);
+                BufOrigin(int pointer_depth, llvm::Value *bufo);
         };
 
 };
@@ -36,7 +40,7 @@ namespace boda {
 template<>
 struct std::hash<boda::BufOrigin> {
         std::size_t operator()(const boda::BufOrigin &bo) const noexcept {
-                return std::hash<int>{}(bo.pointer_depth) ^ std::hash<std::string>{}(bo.bufo_name);
+                return std::hash<int>{}(bo.pointer_depth) ^ std::hash<llvm::Value *>{}(bo.bufo);
         }
 };
 
