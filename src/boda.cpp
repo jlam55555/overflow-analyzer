@@ -84,6 +84,7 @@ namespace boda {
 #endif
                 
                 // Get initial analysis by joining analyses (output_sets) of predecessors.
+                // The greek letter sigma is the symbol used in the literature.
                 ValueAnalysis sigma{};
                 for (llvm::pred_iterator bb_it = llvm::pred_begin(bb);
                      bb_it != llvm::pred_end(bb);
@@ -92,10 +93,20 @@ namespace boda {
                 }
 
                 // Walk through instruction by instruction, performing transition function.
-                // TODO
+                bool dirty = false;
+                for (llvm::BasicBlock::iterator inst_it = bb->begin();
+                     inst_it != bb->end();
+                     ++inst_it) {
+                        llvm::Instruction *inst = &*inst_it;
+                        
+                        sigma.transition(inst);
+                        if (sigma != fa->ias[inst]) {
+                                dirty = true;
+                                fa->ias[inst] = sigma;
+                        }
+                }
 
-                // TODO
-                return false;
+                return dirty;
         }
 
         // Perform the dataflow analysis on this function.

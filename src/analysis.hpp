@@ -20,8 +20,18 @@ namespace boda {
         public:
                 // Set of possible buffer origins for each buffer.
                 std::unordered_map<llvm::Value *, std::unordered_set<std::string>> bufos{};
-
+                
+                // Comparing two dataflow analyses by value.
+                bool operator==(const ValueAnalysis &va2) const;
+                bool operator!=(const ValueAnalysis &va2) const;
+                
+                // Dataflow analysis join of abstract variables for all buffers.
+                // This lattice is the set lattice, so the join operation is
+                // simply set union.
                 void join(ValueAnalysis &va2);
+
+                // Transition function of dataflow analysis over an instruction.
+                void transition(llvm::Instruction *inst);
         };
 
         class FunctionAnalysis {
