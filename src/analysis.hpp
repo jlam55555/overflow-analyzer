@@ -14,10 +14,36 @@
 #include <unordered_map>
 #include <unordered_set>
 
-void analysis(llvm::Module *module);
+namespace boda {
 
-void boda(llvm::ModuleSlotTracker *mst, llvm::Function *fn);
+        class FunctionAnalysis {
+        public:
+                std::unordered_set<std::string> bufos{};
+                std::unordered_map<std::string, llvm::Value *> bufs{};
+                llvm::Function *fn;
 
-void trace_cfg(llvm::Module *module);
+                // Note: Default constructor required for use in map.
+                // Shouldn't really have null function though.
+                FunctionAnalysis();
+                
+                FunctionAnalysis(llvm::Function *fn);
+        };
+        
+        class GlobalState {
+        public:
+                llvm::ModuleSlotTracker mst;
+                llvm::Module *mod;
+
+                std::unordered_map<llvm::Function *, FunctionAnalysis> fas;
+
+                GlobalState(llvm::Module *mod);
+        };
+
+        void analysis(GlobalState *state);
+
+        void boda(GlobalState *state, llvm::Function *fn);
+
+        void trace_cfg(GlobalState *state);
+};
 
 #endif

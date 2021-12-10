@@ -30,5 +30,6 @@ int main(int argc, char **argv) {
         }
         std::unique_ptr<llvm::Module> module = std::move(moduleOrErr.get());
 
-        analysis(module.get());
+        boda::GlobalState state{module.get()};
+        analysis(&state);
 }

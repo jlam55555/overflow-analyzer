@@ -1,4 +1,8 @@
 #include "./analysis.hpp"
 
-void trace_cfg(llvm::Module *module) {
+namespace boda {
+
+        void trace_cfg(GlobalState *state) {
+        }
+
 }
