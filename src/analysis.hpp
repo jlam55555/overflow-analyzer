@@ -18,8 +18,8 @@ namespace boda {
 
         class ValueAnalysis {
         public:
-                // Set of possible buffer origins.
-                std::unordered_set<std::string> bufos{};
+                // Set of possible buffer origins for each buffer.
+                std::unordered_map<llvm::Value *, std::unordered_set<std::string>> bufos{};
         };
 
         class FunctionAnalysis {
@@ -27,7 +27,12 @@ namespace boda {
                 llvm::Function *fn;
                 std::unordered_set<std::string> bufos{};
                 std::unordered_map<std::string, llvm::Value *> bufs{};
-                std::unordered_map<llvm::Value *, ValueAnalysis> ias;
+
+                // Mapping from each instruction to the analysis after that instruction.
+                std::unordered_map<llvm::Value *, ValueAnalysis> ias{};
+
+                // Dirty basic blocks for the worklist phase.
+                std::unordered_map<llvm::BasicBlock *, bool> dirty_bbs{};
 
                 // Note: Default constructor required for use in map.
                 // Shouldn't really have null function though.

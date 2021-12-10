@@ -76,6 +76,60 @@ namespace boda {
 #endif
         }
 
+        // Performs buffer origin dataflow analysis on a single basic block,
+        // returning true iff any changes were made.
+        bool boda_bb(llvm::BasicBlock *bb) {
+#ifdef DEBUG
+                llvm::outs() << "\t\t\tAnalyzing basic block: " << bb->getName() << "\n";
+#endif
+                
+                // Get analysis by joining analyses of predecessors.
+                // TODO
+
+                // Walk through instruction by instruction, performing transition function.
+                // TODO
+
+                // TODO
+                return false;
+        }
+
+        // Perform the dataflow analysis on this function.
+        void worklist(FunctionAnalysis *fa) {
+#ifdef DEBUG
+                llvm::outs() << "\t\tPerforming dataflow analysis worklist algorithm\n";
+#endif
+                
+                // Set initial basic block dirty and add it to worklist.
+                llvm::BasicBlock *bb = &fa->fn->getEntryBlock();
+                fa->dirty_bbs[bb] = true;
+
+                std::queue<llvm::BasicBlock *> dirty{};
+                dirty.push(bb);
+                
+                // Worklist queue
+                while (!dirty.empty()) {
+                        bb = dirty.front();
+                        dirty.pop();
+
+                        // If basic block is not dirty, no need to perform analysis.
+                        if (!fa->dirty_bbs[bb]) {
+                                continue;
+                        }
+                        fa->dirty_bbs[bb] = false;
+
+                        // If analysis of basic block changes any values,
+                        // then mark all successors dirty and add them to the queue.
+                        if (boda_bb(bb)) {
+                                for (llvm::succ_iterator bb_it = llvm::succ_begin(bb);
+                                     bb_it != llvm::succ_end(bb);
+                                     ++bb_it) {
+                                        fa->dirty_bbs[*bb_it] = true;
+                                        dirty.push(*bb_it);
+                                }
+                        }
+                }
+        }
+
         // "Buffer origin" dataflow analysis. Tracking which stack variables
         // a given may have originated from at any point.
         void boda(GlobalState *state, llvm::Function *fn) {
@@ -93,11 +147,11 @@ namespace boda {
                 getBufferValues(state, fn);
 
                 // Set up the initial analysis information.
-                // TODO
+                // TODO: is there anything to do here?
 
                 // Perform the dataflow analysis per basic block
                 // (standard worklist algorithm).
-                // TODO
+                worklist(&state->fas[fn]);
         }
 
 }

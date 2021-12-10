@@ -1,5 +1,9 @@
 #include <string.h>
 
+void somefn(char *b1, char buf2[10]) {
+        b1 = buf2;
+}
+
 int main(int argc, char **argv) {
         char n1[8192] = {0};
         char n2[1024] = {1,2,3};
