@@ -14,6 +14,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+void analysis(llvm::Module *module);
+
 void boda(llvm::ModuleSlotTracker *mst, llvm::Function *fn);
 
 void trace_cfg(llvm::Module *module);

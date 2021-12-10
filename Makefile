@@ -38,11 +38,14 @@ build: $(BUILD_DIR)/$(BINARY)
 $(BUILD_DIR)/$(BINARY): $(OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(OTHER_SOURCES)
 
-debug: CXXFLAGS+= -g
+debug: CXXFLAGS+= -g -DDEBUG
 debug: build
 
 run: all
 	$(BUILD_DIR)/$(BINARY)
+
+drun: CXXFLAGS+= -g -DDEBUG
+drun: run
 
 .PHONY: clean
 clean:
