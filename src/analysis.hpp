@@ -16,12 +16,38 @@
 
 namespace boda {
 
+        // Representation of the relationship of a buffer to a buffer origin. This is a
+        // member of the abstract values in the lattice (sets of BufOrigin). This is useful
+        // because we may pass around pointers to buffers or nested buffers.
+        class BufOrigin {
+        public:
+                int pointer_depth;
+                std::string bufo_name;
+
+                // Necessary for hashing.
+                bool operator==(const BufOrigin &bo2) const;
+
+                BufOrigin(int pointer_depth, std::string bufo_name);
+        };
+
+};
+
+// Need to put this before any implicit instantiation of BufOrigin.
+template<>
+struct std::hash<boda::BufOrigin> {
+        std::size_t operator()(const boda::BufOrigin &bo) const noexcept {
+                return std::hash<int>{}(bo.pointer_depth) ^ std::hash<std::string>{}(bo.bufo_name);
+        }
+};
+
+namespace boda {
+
         // Dataflow analysis instance at a program point. (I.e., an instance of this is
         // created for each instruction.)
         class BodaAnalysis {
         public:
                 // Set of possible buffer origins for each buffer.
-                std::unordered_map<llvm::Value *, std::unordered_set<std::string>> bufos{};
+                std::unordered_map<llvm::Value *, std::unordered_set<BufOrigin>> bufos{};
                 
                 // Comparing two dataflow analyses by value.
                 bool operator==(const BodaAnalysis &va2) const;
