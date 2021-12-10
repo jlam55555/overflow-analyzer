@@ -20,6 +20,10 @@ namespace boda {
 
         void BodaAnalysis::transition(llvm::Instruction *inst) {
                 // TODO: working here
+
+                // Instructions of interest:
+                // - Known buffer functions (e.g., strcpy, strcat, etc.)
+                // - alloca, getelementptr, load, (store ?) LLVM instructions
         }
         
         FunctionState::FunctionState()
