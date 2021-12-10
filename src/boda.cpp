@@ -61,6 +61,19 @@ getBufferValues(llvm::ModuleSlotTracker *mst, llvm::Function *fn) {
                         }
                 }
         }
+
+#ifdef DEBUG
+        llvm::outs() << "\t\tFunction summary:\n";
+        llvm::outs() << "\t\t\tBuffer origins:";
+        for (std::string bufo : bufos) {
+                llvm::outs() << " " << bufo;
+        }
+        llvm::outs() << "\n\t\t\tBuffers:";
+        for (auto buf : bufs) {
+                llvm::outs() << " " << buf.first << " (" << *buf.second->getType() << ")";
+        }
+        llvm::outs() << "\n";
+#endif
         
         return {bufos, bufs};
 }
