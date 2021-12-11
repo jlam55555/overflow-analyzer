@@ -26,8 +26,8 @@ namespace boda {
                 llvm::Value *bufo;
 
                 // Returns a copy, with one level less/more of indirection.
-                BufOrigin deref();
-                BufOrigin ref();
+                BufOrigin deref() const;
+                BufOrigin ref() const;
 
                 // Necessary for hashing.
                 bool operator==(const BufOrigin &bo2) const;

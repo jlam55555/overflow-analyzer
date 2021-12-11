@@ -2,7 +2,7 @@
 
 namespace boda {
 
-        BufOrigin BufOrigin::deref() {
+        BufOrigin BufOrigin::deref() const {
                 BufOrigin bo = *this;
                 --bo.pointer_depth;
 
@@ -14,7 +14,7 @@ namespace boda {
                 return bo;
         }
 
-        BufOrigin BufOrigin::ref() {
+        BufOrigin BufOrigin::ref() const {
                 BufOrigin bo = *this;
                 ++bo.pointer_depth;
                 return bo;
@@ -60,20 +60,37 @@ namespace boda {
                         bufos[to].insert(BufOrigin{1, to});
                         break;
                         
-                case llvm::Instruction::MemoryOps::Load:
-                        // Load opcode.
-                        break;
-                        
                 case llvm::Instruction::MemoryOps::Store:
                         // Store opcode.
+                        from = inst->getOperand(0);
+                        to = inst->getOperand(1);
+
+                        // Map ref over from's analysis.
+                        bufos[to].clear();
+                        for (const BufOrigin &bufo : bufos[from]) {
+                                bufos[to].insert(bufo.ref());
+                        }
+                        
                         break;
                         
+                case llvm::Instruction::MemoryOps::Load:
                 case llvm::Instruction::MemoryOps::GetElementPtr:
+                        // Load opcode.
                         // Getelementptr opcode acts very similar to load.
+                        to = inst;
+                        from = inst->getOperand(0);
+
+                        // Map deref over from's analysis.
+                        bufos[to].clear();
+                        for (const BufOrigin &bufo : bufos[from]) {
+                                bufos[to].insert(bufo.deref());
+                        }
+                        
                         break;
                         
                 case llvm::Instruction::OtherOps::Call:
-                        // Call opcode for specialbuffer functions.
+                        // Call opcode for special buffer functions.
+                        // TODO: implement this
                         break;
                 }
 
@@ -84,6 +101,7 @@ namespace boda {
         }
 
         void BodaAnalysis::print(llvm::raw_ostream &os) const {
+                // TODO: getname using MST
                 for (const std::pair<llvm::Value *, std::unordered_set<BufOrigin>> &bufo : bufos) {
                         os << bufo.first->getName() << " { ";
                         for (const BufOrigin &bo : bufo.second) {
