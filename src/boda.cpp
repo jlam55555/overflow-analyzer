@@ -78,11 +78,7 @@ namespace boda {
 
         // Performs buffer origin dataflow analysis on a single basic block,
         // returning true iff any changes were made.
-        bool boda_bb(FunctionState *fa, llvm::BasicBlock *bb) {
-#ifdef DEBUG
-                llvm::outs() << "\t\t\tAnalyzing basic block: " << bb->getName() << "\n";
-#endif
-                
+        bool boda_bb(FunctionState *fa, llvm::BasicBlock *bb) {                
                 // Get initial analysis by joining analyses (output_sets) of predecessors.
                 // The greek letter sigma is the symbol used in the literature.
                 BodaAnalysis sigma{};
@@ -91,7 +87,12 @@ namespace boda {
                      ++bb_it) {
                         sigma.join(fa->ias[(*bb_it)->getTerminator()]);
                 }
-
+                
+#ifdef DEBUG
+                llvm::outs() << "\t\t\tAnalyzing basic block: " << bb->getName() << "\n";
+                llvm::outs() << "\t\t\t\tInitial analysis: " << sigma << "\n";
+#endif
+                
                 // Walk through instruction by instruction, performing transition function.
                 bool dirty = false;
                 for (llvm::BasicBlock::iterator inst_it = bb->begin();

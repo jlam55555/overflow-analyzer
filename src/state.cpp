@@ -78,8 +78,8 @@ namespace boda {
                 }
 
 #ifdef DEBUG
-                llvm::outs() << "\t\t\tAnalyzing: " << *inst << "\n";
-                llvm::outs() << "\t\t\t\tAnalysis: " << *this << "\n";
+                llvm::outs() << "\t\t\t\tAnalyzing: " << *inst << "\n";
+                llvm::outs() << "\t\t\t\t\tAnalysis: " << *this << "\n";
 #endif
         }
 
@@ -103,12 +103,12 @@ namespace boda {
                 : mod{mod}, mst{mod} {}
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const boda::BufOrigin &bo) {
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const boda::BufOrigin &bo) {
         bo.print(os);
         return os;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const boda::BodaAnalysis &boda_analysis) {
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const boda::BodaAnalysis &boda_analysis) {
         boda_analysis.print(os);
         return os;
 }

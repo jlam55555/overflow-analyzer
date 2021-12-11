@@ -110,7 +110,7 @@ namespace boda {
 };
 
 // Allow printing using llvm::outs().
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const boda::BufOrigin &bo);
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const boda::BodaAnalysis &boda_analyssi);
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const boda::BufOrigin &bo);
+llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const boda::BodaAnalysis &boda_analysis);
 
 #endif
