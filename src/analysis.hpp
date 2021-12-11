@@ -8,6 +8,7 @@
 #include <llvm/IR/ModuleSlotTracker.h>
 #include <llvm/Support/Error.h>
 #include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Support/FormattedStream.h>
 
 #include <queue>
 #include <string>
@@ -31,6 +32,8 @@ namespace boda {
                 // Necessary for hashing.
                 bool operator==(const BufOrigin &bo2) const;
 
+                void print(llvm::raw_ostream &os) const;
+                
                 BufOrigin(int pointer_depth, llvm::Value *bufo);
         };
 
@@ -64,6 +67,8 @@ namespace boda {
 
                 // Transition function of dataflow analysis over an instruction.
                 void transition(llvm::Instruction *inst);
+
+                void print(llvm::raw_ostream &os) const;
         };
 
         // State relevant to the analysis of a function.
@@ -103,5 +108,9 @@ namespace boda {
 
         void trace_cfg(GlobalState *state);
 };
+
+// Allow printing using llvm::outs().
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const boda::BufOrigin &bo);
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const boda::BodaAnalysis &boda_analyssi);
 
 #endif

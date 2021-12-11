@@ -26,6 +26,10 @@ namespace boda {
                         && bufo == bo2.bufo;
         }
 
+        void BufOrigin::print(llvm::raw_ostream &os) const {
+                os << std::string(pointer_depth, '&') << bufo->getName();
+        }
+        
         BufOrigin::BufOrigin(int pointer_depth, llvm::Value *bufo)
                 : pointer_depth{pointer_depth}, bufo{bufo} {}
 
@@ -72,6 +76,21 @@ namespace boda {
                         // Call opcode for specialbuffer functions.
                         break;
                 }
+
+#ifdef DEBUG
+                llvm::outs() << "\t\t\tAnalyzing: " << *inst << "\n";
+                llvm::outs() << "\t\t\t\tAnalysis: " << *this << "\n";
+#endif
+        }
+
+        void BodaAnalysis::print(llvm::raw_ostream &os) const {
+                for (const std::pair<llvm::Value *, std::unordered_set<BufOrigin>> &bufo : bufos) {
+                        os << bufo.first->getName() << " { ";
+                        for (const BufOrigin &bo : bufo.second) {
+                                os << bo << " ";
+                        }
+                        os << "} ";
+                }
         }
         
         FunctionState::FunctionState()
@@ -82,4 +101,14 @@ namespace boda {
 
         GlobalState::GlobalState(llvm::Module *mod)
                 : mod{mod}, mst{mod} {}
+}
+
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const boda::BufOrigin &bo) {
+        bo.print(os);
+        return os;
+}
+
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const boda::BodaAnalysis &boda_analysis) {
+        boda_analysis.print(os);
+        return os;
 }
