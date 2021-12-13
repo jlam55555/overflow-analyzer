@@ -48,11 +48,15 @@ struct std::hash<boda::BufOrigin> {
 };
 
 namespace boda {
+        class GlobalState;
+        class FunctionState;
 
         // Dataflow analysis instance at a program point. (I.e., an instance of this is
         // created for each instruction.)
         class BodaAnalysis {
         public:
+                FunctionState *fa;
+                
                 // Set of possible buffer origins for each buffer.
                 std::unordered_map<llvm::Value *, std::unordered_set<BufOrigin>> bufos{};
                 
@@ -69,11 +73,14 @@ namespace boda {
                 void transition(llvm::Instruction *inst);
 
                 void print(llvm::raw_ostream &os) const;
+
+                BodaAnalysis(FunctionState *fa = nullptr);
         };
 
         // State relevant to the analysis of a function.
         class FunctionState {
         public:
+                GlobalState *state;
                 llvm::Function *fn;
                 std::unordered_set<std::string> bufos{};
                 std::unordered_map<std::string, llvm::Value *> bufs{};
@@ -84,11 +91,7 @@ namespace boda {
                 // Dirty basic blocks for the worklist phase.
                 std::unordered_map<llvm::BasicBlock *, bool> dirty_bbs{};
 
-                // Note: Default constructor required for use in map.
-                // Shouldn't really have null function though.
-                FunctionState();
-                
-                FunctionState(llvm::Function *fn);
+                FunctionState(GlobalState *state = nullptr, llvm::Function *fn = nullptr);
         };
 
         // State relevant to the overall analysis.

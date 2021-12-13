@@ -110,12 +110,11 @@ namespace boda {
                         os << "} ";
                 }
         }
+
+        BodaAnalysis::BodaAnalysis(FunctionState *fa) : fa{fa} {}
         
-        FunctionState::FunctionState()
-                : fn{nullptr} {}
-        
-        FunctionState::FunctionState(llvm::Function *fn)
-                : fn{fn} {}
+        FunctionState::FunctionState(GlobalState *state, llvm::Function *fn)
+                : state{state}, fn{fn} {}
 
         GlobalState::GlobalState(llvm::Module *mod)
                 : mod{mod}, mst{mod} {}

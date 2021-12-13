@@ -78,7 +78,7 @@ namespace boda {
 
         // Performs buffer origin dataflow analysis on a single basic block,
         // returning true iff any changes were made.
-        bool boda_bb(FunctionState *fa, llvm::BasicBlock *bb) {                
+        bool boda_bb(FunctionState *fa, llvm::BasicBlock *bb) {
                 // Get initial analysis by joining analyses (output_sets) of predecessors.
                 // The greek letter sigma is the symbol used in the literature.
                 BodaAnalysis sigma{};
@@ -147,6 +147,18 @@ namespace boda {
                 }
         }
 
+        // Set up function state.
+        void setupFunctionState(FunctionState *fa) {
+                // Create a new analysis for each instruction.
+                for (llvm::Function::iterator bb_it = fa->fn->begin(); bb_it != fa->fn->end(); ++bb_it) {
+                        for (llvm::BasicBlock::iterator inst_it = bb_it->begin();
+                             inst_it != bb_it->end();
+                             ++inst_it) {
+                                fa->ias[&*inst_it] = BodaAnalysis(fa);
+                        }
+                }
+        }
+
         // "Buffer origin" dataflow analysis. Tracking which stack variables
         // a given may have originated from at any point.
         void boda(GlobalState *state, llvm::Function *fn) {
@@ -165,13 +177,13 @@ namespace boda {
                 state->mst.incorporateFunction(*fn);
 
                 // Create function analysis class.
-                state->fas[fn] = FunctionState{fn};
+                state->fas[fn] = FunctionState{state, fn};
 
                 // Get all buffer values in the function.
                 getBufferValues(state, fn);
 
-                // Set up the initial analysis information.
-                // TODO: is there anything to do here?
+                // Set up the initial function analysis state.
+                setupFunctionState(&state->fas[fn]);
 
                 // Perform the dataflow analysis per basic block
                 // (standard worklist algorithm).
