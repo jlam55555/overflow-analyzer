@@ -36,7 +36,7 @@ namespace boda {
 
                                 // Keep track of all function calls.
                                 if (inst->getOpcode() == llvm::Instruction::OtherOps::Call) {
-                                        fa->fncalls.push_back(inst);
+                                        fa->fncalls.push_back(llvm::dyn_cast<llvm::CallInst>(inst));
 #ifdef DEBUG
                                         llvm::outs() << "\t\t\tNew fncall\n";
 #endif

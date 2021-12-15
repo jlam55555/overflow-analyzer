@@ -21,7 +21,7 @@ getModuleFromFile(std::string &filename, llvm::LLVMContext &context) {
 
 int main(int argc, char **argv) {
         // Get module from path
-        std::string path = "res/llvm/bufs5.bc";
+        std::string path = "res/llvm/bufs3.bc";
         llvm::LLVMContext context{};
         llvm::Expected<std::unique_ptr<llvm::Module>> moduleOrErr =
                 getModuleFromFile(path, context);

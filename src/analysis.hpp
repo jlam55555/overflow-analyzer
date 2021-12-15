@@ -4,6 +4,7 @@
 #include <llvm/Bitcode/BitcodeReader.h>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/CFG.h>
+#include <llvm/IR/Instructions.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/ModuleSlotTracker.h>
 #include <llvm/Support/Error.h>
@@ -85,7 +86,7 @@ namespace boda {
                 llvm::ModuleSlotTracker mst;
                 std::unordered_set<std::string> bufos{};
                 std::unordered_map<std::string, llvm::Value *> bufs{};
-                std::vector<llvm::Value *> fncalls{};
+                std::vector<llvm::CallInst *> fncalls{};
 
                 // Mapping from each instruction to the analysis after that instruction.
                 std::unordered_map<llvm::Value *, BodaAnalysis *> ias{};
