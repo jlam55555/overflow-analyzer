@@ -85,6 +85,7 @@ namespace boda {
                 llvm::ModuleSlotTracker mst;
                 std::unordered_set<std::string> bufos{};
                 std::unordered_map<std::string, llvm::Value *> bufs{};
+                std::vector<llvm::Value *> fncalls{};
 
                 // Mapping from each instruction to the analysis after that instruction.
                 std::unordered_map<llvm::Value *, BodaAnalysis *> ias{};

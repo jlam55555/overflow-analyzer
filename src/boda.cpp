@@ -34,6 +34,14 @@ namespace boda {
                                 llvm::outs() << "\t\tExamining instruction: " << *inst << "\n";
 #endif
 
+                                // Keep track of all function calls.
+                                if (inst->getOpcode() == llvm::Instruction::OtherOps::Call) {
+                                        fa->fncalls.push_back(inst);
+#ifdef DEBUG
+                                        llvm::outs() << "\t\t\tNew fncall\n";
+#endif
+                                }
+
                                 // Void types
                                 if (inst->getType()->isVoidTy()) {
                                         continue;
@@ -173,6 +181,7 @@ namespace boda {
                 
 #ifdef DEBUG
                 llvm::outs() << "\tBODA on function: " << fn->getName() << "\n";
+                llvm::outs() << "\tFunction def: " << *fn << "\n";
 #endif
 
                 // Create function analysis class.
