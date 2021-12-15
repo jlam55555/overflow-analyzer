@@ -20,9 +20,9 @@ namespace boda {
 
         // Finds all of the candidate buffer values in the function.
         // This includes pointer-to-pointer and pointer-to-array types.
-        void getBufferValues(GlobalState *state, llvm::Function *fn) {
-                boda::FunctionState *fa = &state->fas[fn];
-
+        void getBufferValues(FunctionState *fa) {
+                llvm::Function *fn = fa->fn;
+                
                 for (llvm::Function::iterator bb_it = fn->begin();
                      bb_it != fn->end();
                      ++bb_it) {
@@ -41,7 +41,7 @@ namespace boda {
 
                                 std::string valName = inst->hasName()
                                         ? inst->getName().str()
-                                        : "%vr" + std::to_string(state->mst.getLocalSlot(inst));
+                                        : "%vr" + std::to_string(fa->mst.getLocalSlot(inst));
 
                                 // New buffer origin
                                 if (inst->getOpcode() == llvm::Instruction::MemoryOps::Alloca
@@ -81,7 +81,7 @@ namespace boda {
         bool boda_bb(FunctionState *fa, llvm::BasicBlock *bb) {
                 // Get initial analysis by joining analyses (output_sets) of predecessors.
                 // The greek letter sigma is the symbol used in the literature.
-                BodaAnalysis sigma{};
+                BodaAnalysis sigma{fa};
                 for (llvm::pred_iterator bb_it = llvm::pred_begin(bb);
                      bb_it != llvm::pred_end(bb);
                      ++bb_it) {
@@ -101,9 +101,9 @@ namespace boda {
                         llvm::Instruction *inst = &*inst_it;
                         
                         sigma.transition(inst);
-                        if (sigma != fa->ias[inst]) {
+                        if (sigma != *fa->ias[inst]) {
                                 dirty = true;
-                                fa->ias[inst] = sigma;
+                                *fa->ias[inst] = sigma;
                         }
                 }
 
@@ -154,7 +154,7 @@ namespace boda {
                         for (llvm::BasicBlock::iterator inst_it = bb_it->begin();
                              inst_it != bb_it->end();
                              ++inst_it) {
-                                fa->ias[&*inst_it] = BodaAnalysis(fa);
+                                fa->ias[&*inst_it] = new BodaAnalysis{fa};
                         }
                 }
         }
@@ -162,6 +162,8 @@ namespace boda {
         // "Buffer origin" dataflow analysis. Tracking which stack variables
         // a given may have originated from at any point.
         void boda(GlobalState *state, llvm::Function *fn) {
+                FunctionState *fa;
+                
                 if (fn->isDeclaration()) {
 #ifdef DEBUG
                         llvm::outs() << "\tExternal function, skipping analysis: " << fn->getName() << "\n";
@@ -172,22 +174,19 @@ namespace boda {
 #ifdef DEBUG
                 llvm::outs() << "\tBODA on function: " << fn->getName() << "\n";
 #endif
-        
-                // Necessary for ModuleSlotTracker to work correctly.
-                state->mst.incorporateFunction(*fn);
 
                 // Create function analysis class.
-                state->fas[fn] = FunctionState{state, fn};
+                state->fas[fn] = fa = new FunctionState{state, fn};
 
                 // Get all buffer values in the function.
-                getBufferValues(state, fn);
+                getBufferValues(fa);
 
                 // Set up the initial function analysis state.
-                setupFunctionState(&state->fas[fn]);
+                setupFunctionState(fa);
 
                 // Perform the dataflow analysis per basic block
                 // (standard worklist algorithm).
-                worklist(&state->fas[fn]);
+                worklist(fa);
         }
 
 }

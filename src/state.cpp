@@ -41,9 +41,9 @@ namespace boda {
                 return !(*this == va2);
         }
 
-        void BodaAnalysis::join(BodaAnalysis &va2) {
+        void BodaAnalysis::join(BodaAnalysis *va2) {
                 for (std::pair<llvm::Value *, std::unordered_set<BufOrigin>> buf_analysis
-                             : va2.bufos) {
+                             : va2->bufos) {
                         bufos[buf_analysis.first]
                                 .insert(buf_analysis.second.begin(),
                                         buf_analysis.second.end());
@@ -101,9 +101,8 @@ namespace boda {
         }
 
         void BodaAnalysis::print(llvm::raw_ostream &os) const {
-                // TODO: getname using MST
                 for (const std::pair<llvm::Value *, std::unordered_set<BufOrigin>> &bufo : bufos) {
-                        os << bufo.first->getName() << " { ";
+                        os << fa->getName(bufo.first) << " { ";
                         for (const BufOrigin &bo : bufo.second) {
                                 os << bo << " ";
                         }
@@ -112,12 +111,20 @@ namespace boda {
         }
 
         BodaAnalysis::BodaAnalysis(FunctionState *fa) : fa{fa} {}
-        
+
+        std::string FunctionState::getName(llvm::Value *value) {
+                return value->hasName()
+                        ? value->getName().str()
+                        : "%vr_" + std::to_string(mst.getLocalSlot(value));
+        }
+
         FunctionState::FunctionState(GlobalState *state, llvm::Function *fn)
-                : state{state}, fn{fn} {}
+                : state{state}, fn{fn}, mst{state->mod} {
+                mst.incorporateFunction(*fn);
+        }
 
         GlobalState::GlobalState(llvm::Module *mod)
-                : mod{mod}, mst{mod} {}
+                : mod{mod} {}
 }
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const boda::BufOrigin &bo) {
