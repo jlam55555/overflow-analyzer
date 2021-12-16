@@ -22,7 +22,17 @@ namespace boda {
         // This includes pointer-to-pointer and pointer-to-array types.
         void getBufferValues(FunctionState *fa) {
                 llvm::Function *fn = fa->fn;
-                
+
+                // Get all variables from parameters
+                for (llvm::Function::arg_iterator arg_it = fn->arg_begin();
+                     arg_it != fn->arg_end();
+                     ++arg_it) {
+                        llvm::Argument *arg = &*arg_it;
+
+                        llvm::outs() << "\t\tGot argument: " << *arg << "\n";
+                }
+
+                // Get all buffers from local variables
                 for (llvm::Function::iterator bb_it = fn->begin();
                      bb_it != fn->end();
                      ++bb_it) {
