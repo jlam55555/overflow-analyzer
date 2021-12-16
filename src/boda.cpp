@@ -30,10 +30,14 @@ namespace boda {
                      ++arg_it) {
                         llvm::Argument *arg = &*arg_it;
 
+#ifdef DEBUG
                         llvm::outs() << "\t\tGot argument: " << *arg << "\n";
+#endif DEBUG
 
                         if (arg->getType()->isPointerTy()) {
+#ifdef DEBUG
                                 llvm::outs() << "\t\t\tNew buffer argument\n";
+#endif DEBUG
                                 fa->args.insert({arg, arg_index});
                         }
                         ++arg_index;
