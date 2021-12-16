@@ -123,7 +123,8 @@ namespace boda {
 #endif
                 
                 for (llvm::CallInst *fncall_inst : fa->fncalls) {
-                        std::string fncall_name = fncall_inst->getCalledFunction()->getName().str();
+                        llvm::Function* called_fn = fncall_inst->getCalledFunction();
+                        std::string fncall_name = called_fn->getName().str();
                         
 #ifdef DEBUG
                         llvm::outs() << "\t\tExamining fncall: " << fncall_name << "\n";
@@ -156,9 +157,9 @@ namespace boda {
                         if (dangerous_fns.count(fncall_name)) {
                                 // If dangerous function
                                 dangerous_fns[fncall_name](arg_list);
-                        } else if (!fncall_inst->getCalledFunction()->isDeclaration()) {
+                        } else if (!called_fn->isDeclaration()) {
                                 // If user-defined function
-                                trace_fn(fa, {});
+                                trace_fn(fa->state->fas[called_fn], {});
                         }
                 }
                 
