@@ -17,12 +17,64 @@
 // TODO: get line numbers from original file
 
 namespace boda {
+        // 0 for error, 1 for warning
+        std::string setStyle(std::string msg, int color) {
+                switch (color) {
+                case 0: return std::string{"\033[31;1m"} + msg + std::string{"\033[0m"};
+                case 1: return std::string{"\033[33;1m"} + msg + std::string{"\033[0m"};
+                default: return msg;
+                }
+        }
+        
+        // Get buffer size. For now, only get number of elements, don't worry about element size.
+        int getBufSize(llvm::Type *ty) {
+                if (ty->isPointerTy()) {
+                        return getBufSize(llvm::dyn_cast<llvm::PointerType>(ty)->getElementType());
+                } else if (ty->isArrayTy()) {
+                        return llvm::dyn_cast<llvm::ArrayType>(ty)->getNumElements();
+                } else {
+                        // panic???? can't throw an exception
+                        return -1;
+                }
+        }
+        
         // TODO: handle argv? I don't think we need to though
         // TODO: handle recursive calls
         static std::unordered_map<std::string, void (*)(std::vector<std::unordered_set<boda::BufOrigin>>)>
         dangerous_fns{
                 {"strcpy", [](std::vector<std::unordered_set<boda::BufOrigin>> argos) {
+                        // Warn unsafe
+                        llvm::outs() << "\t\t["
+                                     << setStyle(std::string{"Warning"}, 1)
+                                     << "]: unsafe function strcpy()\n";
                         
+                        // Warn if any src > dst
+                        // Assume same indirection depth for now...
+                        llvm::outs() << "\t\t\tPossible destinations: ";
+                        int minDst = INT_MAX, maxSrc = INT_MIN;
+                        for (boda::BufOrigin bo : argos[0]) {
+                                int size = getBufSize(bo.bufo->getType());
+                                minDst = std::min(minDst, size);
+                                llvm::outs() << bo << " (" << size << ") ";
+                        }
+                        llvm::outs() << "\n\t\t\tPossible sources: ";
+                        for (boda::BufOrigin bo : argos[1]) {
+                                int size = getBufSize(bo.bufo->getType());
+                                maxSrc = std::max(maxSrc, size);
+                                llvm::outs() << bo << " (" << size << ") ";
+                        }
+                        llvm::outs() << "\n";
+
+                        if (maxSrc > minDst) {
+                                llvm::outs() << "\t\t\t["
+                                             << setStyle(std::string{"Danger"}, 0)
+                                             << "]: potential buffer overflow (source:"
+                                             << maxSrc
+                                             << " > destination:"
+                                             << minDst
+                                             << ")\n";
+                        }
+
                 }},
                 {"strcat", [](std::vector<std::unordered_set<boda::BufOrigin>> argos) {}},
                 {"gets",  [](std::vector<std::unordered_set<boda::BufOrigin>> argos) {}},
@@ -48,12 +100,14 @@ namespace boda {
                         BodaAnalysis *inst_analysis = fa->ias[fncall_inst];
 
                         // Grab arguments
+                        std::vector<std::unordered_set<boda::BufOrigin>> arg_list{};
                         for (llvm::Use *use_it = fncall_inst->arg_begin();
                              use_it != fncall_inst->arg_end();
                              ++use_it) {
                                 llvm::Value *arg_value = *use_it;
 
                                 std::unordered_set<boda::BufOrigin> var_analysis = inst_analysis->bufos[arg_value];
+                                arg_list.push_back(var_analysis);
 #ifdef DEBUG
                                 llvm::outs() << "\t\t\tArg: " << fa->getName(arg_value) << "; possible origins: { ";
                                 for (boda::BufOrigin bo : var_analysis) {
@@ -64,8 +118,7 @@ namespace boda {
                         }
 
                         if (dangerous_fns.count(fncall_name)) {
-                                llvm::outs() << "Dangerous function: " << fncall_name << "\n";
-                                dangerous_fns[fncall_name]({});
+                                dangerous_fns[fncall_name](arg_list);
                         }
                 }
                 
