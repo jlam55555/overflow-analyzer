@@ -24,7 +24,7 @@ build_bc: $(LLVM_BC_FILES)
 # Don't strictly need LLVM files, but these are textual
 # and may be used for visual aid
 $(LLVM_OUT_DIR)/%.ll: $(LLVM_SOURCE_DIR)/%.c
-	clang -S -emit-llvm -o $@ $^
+	clang -S -emit-llvm -o $@ $^ -fno-discard-value-names
 
 # Build LLVM bitcode for reading
 $(LLVM_OUT_DIR)/%.bc: $(LLVM_SOURCE_DIR)/%.c

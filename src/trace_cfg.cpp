@@ -37,6 +37,15 @@ namespace boda {
                         return -1;
                 }
         }
+
+        // Get debuging information (fnname, location) for buforigin.
+        std::string getInstructionDetails(llvm::Value *bo) {
+                llvm::Instruction *bo_inst = llvm::dyn_cast<llvm::Instruction>(bo);
+                return bo_inst->getFunction()->getName().str()
+                        // Having trouble getting buffer origin for the time being
+                        // + ":" + std::to_string(bo_inst->getDebugLoc().getLine())
+                        + ":" + bo->getName().str();
+        }
         
         // TODO: handle argv? I don't think we need to though
         // TODO: handle recursive calls
@@ -55,13 +64,13 @@ namespace boda {
                         for (boda::BufOrigin bo : argos[0]) {
                                 int size = getBufSize(bo.bufo->getType());
                                 minDst = std::min(minDst, size);
-                                llvm::outs() << bo << " (" << size << ") ";
+                                llvm::outs() << getInstructionDetails(bo.bufo) << "[" << size << "] ";
                         }
                         llvm::outs() << "\n\t\t\tPossible sources: ";
                         for (boda::BufOrigin bo : argos[1]) {
                                 int size = getBufSize(bo.bufo->getType());
                                 maxSrc = std::max(maxSrc, size);
-                                llvm::outs() << bo << " (" << size << ") ";
+                                llvm::outs() << getInstructionDetails(bo.bufo) << "[" << size << "] ";
                         }
                         llvm::outs() << "\n";
 
