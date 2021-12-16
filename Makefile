@@ -34,7 +34,7 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
-build: $(BUILD_DIR)/$(BINARY)
+build: $(BUILD_DIR)/$(BINARY) build_bc
 $(BUILD_DIR)/$(BINARY): $(OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(OTHER_SOURCES)
 

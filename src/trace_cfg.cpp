@@ -33,7 +33,7 @@ namespace boda {
                 } else if (ty->isArrayTy()) {
                         return llvm::dyn_cast<llvm::ArrayType>(ty)->getNumElements();
                 } else {
-                        // panic???? can't throw an exception
+                        // Doesn't refer to a fixed-size buffer. May refer to a malloced buffer.
                         return -1;
                 }
         }
@@ -63,13 +63,17 @@ namespace boda {
                         int minDst = INT_MAX, maxSrc = INT_MIN;
                         for (boda::BufOrigin bo : argos[0]) {
                                 int size = getBufSize(bo.bufo->getType());
-                                minDst = std::min(minDst, size);
+                                if (size != -1) {
+                                        minDst = std::min(minDst, size);
+                                }
                                 llvm::outs() << getInstructionDetails(bo.bufo) << "[" << size << "] ";
                         }
                         llvm::outs() << "\n\t\t\tPossible sources: ";
                         for (boda::BufOrigin bo : argos[1]) {
                                 int size = getBufSize(bo.bufo->getType());
-                                maxSrc = std::max(maxSrc, size);
+                                if (size != -1) {
+                                        maxSrc = std::max(maxSrc, size);
+                                }
                                 llvm::outs() << getInstructionDetails(bo.bufo) << "[" << size << "] ";
                         }
                         llvm::outs() << "\n";
@@ -85,14 +89,34 @@ namespace boda {
                         }
 
                 }},
-                {"strcat", [](std::vector<std::unordered_set<boda::BufOrigin>> argos) {}},
-                {"gets",  [](std::vector<std::unordered_set<boda::BufOrigin>> argos) {}},
-                {"scanf", [](std::vector<std::unordered_set<boda::BufOrigin>> argos) {}},
-                {"sprintf", [](std::vector<std::unordered_set<boda::BufOrigin>> argos) {}}
+                {"strcat", [](std::vector<std::unordered_set<boda::BufOrigin>> argos) {
+                        // TODO: essentially the same as strcpy
+                        llvm::outs() << "\t\t["
+                                     << setStyle(std::string{"Warning"}, 1)
+                                     << "]: unsafe function strcat()\n";
+                }},
+                {"gets",  [](std::vector<std::unordered_set<boda::BufOrigin>> argos) {
+                        llvm::outs() << "\t\t["
+                                     << setStyle(std::string{"Warning"}, 1)
+                                     << "]: unsafe function gets()\n";
+                        // TODO
+                }},
+                {"scanf", [](std::vector<std::unordered_set<boda::BufOrigin>> argos) {
+                        llvm::outs() << "\t\t["
+                                     << setStyle(std::string{"Warning"}, 1)
+                                     << "]: unsafe function scanf()\n";
+                        // TODO
+                }},
+                {"sprintf", [](std::vector<std::unordered_set<boda::BufOrigin>> argos) {
+                        llvm::outs() << "\t\t["
+                                     << setStyle(std::string{"Warning"}, 1)
+                                     << "]: unsafe function sprintf()\n";
+                        // TODO
+                }}
         };
         
         // Recursively CFG trace a function
-        void trace_fn(FunctionState *fa, std::vector<llvm::Value *> params) {
+        void trace_fn(FunctionState *fa, std::vector<std::unordered_set<boda::BufOrigin>> params) {
 
 #ifdef DEBUG
                 llvm::outs() << "\tIn function: " << fa->fn->getName() << "\n";
@@ -117,6 +141,9 @@ namespace boda {
 
                                 std::unordered_set<boda::BufOrigin> var_analysis = inst_analysis->bufos[arg_value];
                                 arg_list.push_back(var_analysis);
+
+                                // Replace anything that lists a parameter with the parameter value
+                                
 #ifdef DEBUG
                                 llvm::outs() << "\t\t\tArg: " << fa->getName(arg_value) << "; possible origins: { ";
                                 for (boda::BufOrigin bo : var_analysis) {
@@ -127,7 +154,11 @@ namespace boda {
                         }
 
                         if (dangerous_fns.count(fncall_name)) {
+                                // If dangerous function
                                 dangerous_fns[fncall_name](arg_list);
+                        } else if (!fncall_inst->getCalledFunction()->isDeclaration()) {
+                                // If user-defined function
+                                trace_fn(fa, {});
                         }
                 }
                 

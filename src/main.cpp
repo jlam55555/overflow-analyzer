@@ -20,8 +20,13 @@ getModuleFromFile(std::string &filename, llvm::LLVMContext &context) {
 }
 
 int main(int argc, char **argv) {
+        if (argc < 2) {
+                llvm::errs() << "Usage: ./overflow_analyzer [LLVM_BC_FILE]\n";
+                return 1;
+        }
+        
         // Get module from path
-        std::string path = "res/llvm/bufs3.bc";
+        std::string path = std::string{argv[1]};
         llvm::LLVMContext context{};
         llvm::Expected<std::unique_ptr<llvm::Module>> moduleOrErr =
                 getModuleFromFile(path, context);
