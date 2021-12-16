@@ -110,12 +110,17 @@ namespace boda {
                 }
         }
 
-        BodaAnalysis::BodaAnalysis(FunctionState *fa) : fa{fa} {}
+        BodaAnalysis::BodaAnalysis(FunctionState *fa) : fa{fa} {
+                // Set up default analysis information for the function from the parameters.
+                for (std::pair<llvm::Value *, int> arg : fa->args) {
+                        bufos[arg.first].insert(BufOrigin(0, arg.first));
+                }
+        }
 
         std::string FunctionState::getName(llvm::Value *value) {
                 return value->hasName()
                         ? value->getName().str()
-                        : "%vr_" + std::to_string(mst.getLocalSlot(value));
+                        : "%" + std::to_string(mst.getLocalSlot(value));
         }
 
         FunctionState::FunctionState(GlobalState *state, llvm::Function *fn)

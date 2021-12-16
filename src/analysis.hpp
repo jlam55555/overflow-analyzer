@@ -87,6 +87,7 @@ namespace boda {
                 std::unordered_set<std::string> bufos{};
                 std::unordered_map<std::string, llvm::Value *> bufs{};
                 std::vector<llvm::CallInst *> fncalls{};
+                std::unordered_map<llvm::Value *, int> args{};
 
                 // Mapping from each instruction to the analysis after that instruction.
                 std::unordered_map<llvm::Value *, BodaAnalysis *> ias{};

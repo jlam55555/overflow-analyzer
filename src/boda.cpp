@@ -24,12 +24,19 @@ namespace boda {
                 llvm::Function *fn = fa->fn;
 
                 // Get all variables from parameters
+                int arg_index = 0;
                 for (llvm::Function::arg_iterator arg_it = fn->arg_begin();
                      arg_it != fn->arg_end();
                      ++arg_it) {
                         llvm::Argument *arg = &*arg_it;
 
                         llvm::outs() << "\t\tGot argument: " << *arg << "\n";
+
+                        if (arg->getType()->isPointerTy()) {
+                                llvm::outs() << "\t\t\tNew buffer argument\n";
+                                fa->args.insert({arg, arg_index});
+                        }
+                        ++arg_index;
                 }
 
                 // Get all buffers from local variables

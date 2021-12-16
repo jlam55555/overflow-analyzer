@@ -140,18 +140,29 @@ namespace boda {
                              ++use_it) {
                                 llvm::Value *arg_value = *use_it;
 
-                                std::unordered_set<boda::BufOrigin> var_analysis = inst_analysis->bufos[arg_value];
-                                arg_list.push_back(var_analysis);
+                                std::unordered_set<boda::BufOrigin> var_analysis = inst_analysis->bufos[arg_value],
+                                        var_analysis_sub{};
 
                                 // Replace anything that lists a parameter with the parameter value
-                                
-#ifdef DEBUG
-                                llvm::outs() << "\t\t\tArg: " << fa->getName(arg_value) << "; possible origins: { ";
                                 for (boda::BufOrigin bo : var_analysis) {
+                                        // Parameter -- replace it with arg list
+                                        if (fa->args.count(bo.bufo)) {
+                                                var_analysis_sub.insert(params[fa->args[bo.bufo]].begin(),
+                                                                        params[fa->args[bo.bufo]].end());
+                                        }
+                                        // non-parameter 
+                                        else {
+                                                var_analysis_sub.insert(bo);
+                                        }
+                                }
+                                
+                                llvm::outs() << "\t\t\tArg: " << fa->getName(arg_value) << "; possible origins: { ";
+                                for (boda::BufOrigin bo : var_analysis_sub) {
                                         llvm::outs() << bo << " ";
                                 }
                                 llvm::outs() << "}\n";
-#endif
+
+                                arg_list.push_back(var_analysis_sub);
                         }
 
                         if (dangerous_fns.count(fncall_name)) {
@@ -159,7 +170,7 @@ namespace boda {
                                 dangerous_fns[fncall_name](arg_list);
                         } else if (!called_fn->isDeclaration()) {
                                 // If user-defined function
-                                trace_fn(fa->state->fas[called_fn], {});
+                                trace_fn(fa->state->fas[called_fn], arg_list);
                         }
                 }
                 
