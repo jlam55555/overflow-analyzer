@@ -4,7 +4,7 @@ A very simple static analyzer designed for buffer overflows in C
 
 Final project for ECE455 by Jonathan Lam and Daniel Tsarev
 
-[Report][report] (work in progress) | [Slides][slides]
+[Report][report] | [Slides][slides]
 
 ---
 
